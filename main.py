@@ -2,7 +2,7 @@ from tkinter import *
 from  tkinter import messagebox
 from random import choice, randint, shuffle
 import pyperclip
-
+import json
 from numpy.ma.extras import row_stack
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
@@ -33,26 +33,50 @@ def generate():
 #---------------------------- Save Data -------------------------------------------#
 
 def get_detail():
-    website_value = website_input.get()
-    email_value = eu_input.get()
-    password_value = password_input.get()
+    website = website_input.get()
+    email = eu_input.get()
+    password = password_input.get()
+    new_data = {
+        website:{
+            "email": email,
+            "password": password
+        }
+    }
 
-    if len(website_value) < 1 or len(email_value) < 1 or len(password_value) < 1:
+    if len(website) < 1 or len(email) < 1 or len(password) < 1:
         messagebox.showerror("Empty field", message="Please fill all the fields")
     else:
+        try:
+            with open("data.json", 'r') as file:
+               data = json.load(file)
 
-        is_ok = messagebox.askokcancel(title="Save password", message=f"Do you want save "
-                f"{website_value}, {email_value}, {password_value}")
-        if is_ok:
-            with open("password.text", 'a') as file:
-                file.write(f"Website: {website_value} \n")
-                file.write(f"Email: {email_value} \n")
-                file.write(f"Password: {password_value} \n")
+        except FileNotFoundError:
+              with open('data.json', 'w') as file:
+                 json.dump(new_data, file, indent=4)
 
-                website_input.delete(0, END)
-                password_input.delete(0, END)
-                eu_input.delete(0, END)
+        else:
+            with open('data.json', 'w') as file:
+               data.update(new_data)
+               json.dump(data, file, indent=4)
+        finally:
+            website_input.delete(0, END)
+            password_input.delete(0, END)
+            eu_input.delete(0, END)
 
+# ---------------------------- SEARCH PASSWORD ------------------------------- #
+
+def search():
+    try:
+        website = website_input.get().lower()
+        with open('data.json', 'r') as file:
+            data = json.load(file)
+    except FileNotFoundError:
+        messagebox.showinfo(title="No file", message=" No data file found")
+    else:
+        if website in data:
+            messagebox.showinfo(title=f"{website}", message=f"Email: {data[website]["email"]} \n password: {data[website]["password"]}" )
+        else:
+            messagebox.showerror(title="invalid website", message="Website not found")
 # ---------------------------- UI SETUP ------------------------------- #
 
 window = Tk()
@@ -67,15 +91,18 @@ canvas.grid(column=1, row=0)
 website_text = Label(text="Website:")
 website_text.grid(row=1, column=0)
 
-website_input = Entry(width=35)
-website_input.grid( row=1, column=1, columnspan=2)
+website_input = Entry(width=21, )
+website_input.grid( row=1, column=1)
+
+search_btn = Button(text='search', width=14, command=search)
+search_btn.grid(row=1, column=2)
 
 eu_text = Label(text="Email/Username:")
 eu_text.grid( row=2, column=0)
 
-eu_input = Entry(width=35)
+eu_input = Entry(width=45)
 eu_input.insert(0, "yahyagodiwa@gmail.com")
-eu_input.grid( row=2, column=1, columnspan=2)
+eu_input.grid( row=2, column=1, columnspan=3)
 
 password_text = Label(text="Password:")
 password_text.grid( row=3, column=0,)
